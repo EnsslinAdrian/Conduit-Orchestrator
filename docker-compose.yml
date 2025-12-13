@@ -17,7 +17,7 @@ services:
         context: ./conduit-backend
       restart: on-failure:5
       ports:
-        - "8000:8000"
+        - "8281:8000"
       networks:
         - backend_network
       env_file:
