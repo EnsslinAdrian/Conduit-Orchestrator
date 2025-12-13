@@ -45,12 +45,24 @@ export default class SettingsComponent implements OnInit {
   constructor(
     private readonly router: Router,
     private readonly userService: UserService,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
-    this.settingsForm.patchValue(
-      this.userService.getCurrentUser() as Partial<User>,
-    );
+    this.userService.currentUser
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((user) => {
+        if (!user) return;
+
+        this.settingsForm.patchValue({
+          image: user.image ?? "",
+          username: user.username ?? "",
+          bio: user.bio ?? "",
+          email: user.email ?? "",
+          password: "",
+        });
+      });
+
+    this.userService.getCurrentUser().subscribe();
   }
 
   logout(): void {

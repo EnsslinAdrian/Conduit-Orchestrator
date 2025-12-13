@@ -7,7 +7,7 @@ from .views import (
     CommentsListCreateAPIView, CommentsDestroyAPIView, TagListAPIView
 )
 
-router = DefaultRouter(trailing_slash=False)
+router = DefaultRouter(trailing_slash=True)
 router.register(r'articles', ArticleViewSet)
 
 urlpatterns = [
