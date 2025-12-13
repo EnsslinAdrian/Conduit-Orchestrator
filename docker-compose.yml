@@ -1,0 +1,34 @@
+services:
+    frontend:
+      build:
+        context: ./conduit-frontend
+        args:
+          API_URL: ${FRONTEND_API_URL}
+      restart: on-failure:5
+      ports:
+        - "8282:80"
+      depends_on:
+        - backend
+      networks:
+        - backend_network
+
+    backend:
+      build:
+        context: ./conduit-backend
+      restart: on-failure:5
+      ports:
+        - "8000:8000"
+      networks:
+        - backend_network
+      env_file:
+        - .env
+      volumes:
+        - backend_data:/app
+
+
+
+volumes:
+    backend_data:
+
+networks:
+  backend_network:

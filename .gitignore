@@ -1,4 +1,1 @@
-.docker_files_backend
-docker_files_backend
-.docker_files_frontend
-docker_files_frontend
+.env
