@@ -1,6 +1,8 @@
 #!/bin/bash
 echo "Starting my application..."
 
+mkdir -p /app/db /app/media
+
 python manage.py migrate
 python manage.py collectstatic --noinput
 

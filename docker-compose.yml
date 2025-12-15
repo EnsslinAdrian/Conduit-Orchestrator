@@ -23,12 +23,13 @@ services:
       env_file:
         - .env
       volumes:
-        - backend_data:/app
-
+        - backend_db:/app/db
+        - backend_media:/app/media
 
 
 volumes:
-    backend_data:
+    backend_db:
+    backend_media:
 
 networks:
   backend_network:

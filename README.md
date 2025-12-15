@@ -9,7 +9,8 @@ both services are operated in isolation and reproducibly using Docker and Docker
 3. [Project Structure](#project-structure)
 4. [Usage](#usage)
 5. [Docker commands](#docker-command)
-6. [Author](#author)
+6. [Logs](#logs)
+7. [Author](#author)
 
 ## Prerequisites
 Before running this project, ensure you have:
@@ -95,136 +96,75 @@ Access this URL:
 This project was created to use Docker orchestration without swarm but with a docker-compose.yml file.
 Here we combine containerization using a frontend and a backend that are controlled simultaneously.
 
-> The docker-compose.yml is the orchestrator of this application. Two services are created here: the frontend and the backend, which share the same network.
-```yml
-services:
-    frontend:
-      build:
-        context: ./conduit-frontend
-        args:
-          API_URL: ${FRONTEND_API_URL} # backend url as variable in .env for local and vm
-      restart: on-failure:5 # restart after error 5 times
-      ports:
-        - "8282:80" # port mapping 
-      depends_on:
-        - backend # frontend waits until backend is started
-      networks:
-        - backend_network # (optional) assigned network 
+> The docker-compose.yml acts as the orchestrator of this application. Two services are defined here: the frontend and the backend, which share the same network.
 
-    backend:
-      build:
-        context: ./conduit-backend
-      restart: on-failure:5
-      ports:
-        - "8000:8000" # port mapping
-      networks:
-        - backend_network # (optional) assigned network 
-      env_file:
-        - .env # .env variables are passed to the backend
-      volumes:
-        - backend_data:/app # persistent data storage
+→ [docker-compose.yml](./docker-compose.yml)
+``` yml
+- args        # Backend API URL provided via .env (local and VM environments)
+- restart     # Restarts the container up to 5 times on failure
+- ports       # Port mapping <host>:<container>
+- depends_on  # Ensures the backend is started before the frontend
+- networks    # (Optional) Assigned Docker network
+```
 
-
-
-volumes:
-    backend_data:
-
-networks:
-  backend_network: # (optional) assigned network
+→ [docker-compose.yml](./docker-compose.yml)
+``` yml
+- restart   # Restarts the container up to 5 times on failure
+- ports     # Port mapping <host>:<container>
+- networks  # (Optional) Assigned Docker network
+- env_file  # Loads environment variables from .env
+- volumes   # Persists data such as database and media files outside the container
 ```
 
 <br>
 
-> In conduit-backend I have defined a Dockerfile that reflects the Multi Stage Build principle.
-```yml
-FROM python:3.5-slim as build # Base image with Python 3.5 (compatible with Django 1.10)
-WORKDIR /app # Sets the working directory in the container
-COPY . /app/ # Copies the complete backend source code into the container
+> The backend Dockerfile defines a minimal single-stage build for running the Django application inside a container.
 
-RUN pip install --no-cache-dir -r requirements.txt && \ # Installs Python dependencies and makes the entrypoint script executable
-    chmod +x /app/entrypoint.sh
-
-
-FROM python:3.5-slim as runtime # Slim Python image for runtime
-WORKDIR /app # Sets the working directory again
-COPY --from=build /app /app # Copies the prepared application code from the build stage
-RUN pip install --no-cache-dir -r requirements.txt # Reinstalls dependencies at runtime
-
-EXPOSE 8000 # Opens port 8000 for Gunicorn / Django
-ENTRYPOINT [ "/app/entrypoint.sh" ] # Starts the entrypoint script
+→ [Backend Dockerfile](./conduit-backend/Dockerfile)
+``` yml
+- base image   # Uses a slim Python 3.5 image compatible with Django 1.10
+- workdir      # Sets the application working directory inside the container
+- copy         # Copies the complete backend source code into the container
+- dependencies # Installs Python dependencies and prepares the entrypoint script
+- expose       # Exposes port 8000 for the Django/Gunicorn application
+- entrypoint   # Starts the application via an entrypoint script
 ```
 
 <br>
 
-> In conduit-backend there is also the entrypoint.sh file that handles migration, static files, superuser creation, and server startup via wsgi gunicorn.
-```yml
-#!/bin/bash
-echo "Starting my application..."
+> The entrypoint.sh script is responsible for preparing and starting the backend application at container startup.
 
-python manage.py migrate
-python manage.py collectstatic --noinput
-
-python manage.py shell << EOF
-from django.contrib.auth import get_user_model
-
-User = get_user_model()
-
-user, created = User.objects.get_or_create(
-    username="${SUPERUSER_USERNAME}",
-    defaults={
-        "email": "${SUPERUSER_EMAIL}",
-        "is_staff": True,
-        "is_superuser": True,
-    }
-)
-
-user.is_staff = True
-user.is_superuser = True
-user.set_password("${SUPERUSER_PASSWORD}")
-user.save()
-EOF
-
-exec gunicorn conduit.wsgi:application --bind 0.0.0.0:8000
- 
+→ [Entrypoint script](./conduit-backend/entrypoint.sh)
+``` yml
+- initialization   # Prepares required directories for database and media files
+- migrations       # Applies all pending Django database migrations
+- static files     # Collects static assets for production usage
+- superuser setup  # Creates or updates an administrative user from environment variables
+- application run  # Starts the Django application using Gunicorn (WSGI server)
 ```
 
 <br>
 
-> Configuring the web server. In conduit-frontend, an nginx folder was created with a default.conf file since I want to use nginx as the web server.
-```js
-client_max_body_size 0;
-server_tokens off;
-server_names_hash_bucket_size 64;
+> The frontend is served using Nginx as a lightweight and performant web server.
 
-server {
-    listen 80; // Web server listens on port 80
-    server_name localhost;
-
-    location / {
-        root   /usr/share/nginx/html; // the app is located in the /usr/share/nginx/html directory 
-        index  index.html; // serves index.html for every accessed path
-        try_files $uri $uri/ /index.html;
-    }
-}
+→ [Nginx configuration](./conduit-frontend/nginx/default.conf)
+``` yml
+- build stage     # Compiles the Angular application using Node.js
+- config injection # Injects the backend API URL at build time via build arguments
+- optimization    # Excludes Node.js and build tools from the final image
+- runtime stage   # Serves the compiled frontend via a minimal Nginx image
 ```
 
 <br>
 
-> To create the frontend image, I also created a Dockerfile
-```bash
-FROM node:22-alpine AS buildcontainer # Uses a Node.js image to build the Angular frontend
-WORKDIR /usr/src/app # Sets the working directory in the container
-ARG API_URL # Build argument for the API URL
-ENV API_URL=${API_URL} # Makes the API_URL available during the build process
-COPY . ./ # Copies the complete frontend source code into the container
-RUN npm install # Installs all npm dependencies
-RUN sed -i "s|__API_URL__|${API_URL}|g" src/environments/environment*.ts # Replaces the __API_URL__ placeholder in all environment files
-RUN npm run build # Builds the Angular application
+> The frontend image is built using a multi-stage Docker build to separate the build process from the runtime environment.
 
-FROM nginx:alpine # Slim Nginx image for serving static files
-LABEL maintainer="Adrian Enßlin" # Image metadata
-COPY nginx/default.conf /etc/nginx/conf.d # Copies the custom Nginx configuration
-COPY --from=buildcontainer /usr/src/app/dist/angular-conduit /usr/share/nginx/html # Copies the built Angular frontend from the build stage to the Nginx HTML directory
+→ [Frontend Dockerfile](./conduit-frontend/Dockerfile)
+``` yml
+- build stage     # Compiles the Angular application using Node.js
+- config injection # Injects the backend API URL at build time via build arguments
+- optimization    # Excludes Node.js and build tools from the final image
+- runtime stage   # Serves the compiled frontend via a minimal Nginx image
 ```
 
 
@@ -233,26 +173,49 @@ Start project
 ```bash
 docker compose up -d
 ```
+
 Stop containers
 ```bash
 docker compose down
 ```
+
 Remove containers + volumes
 ```bash
 docker compose down -v
 ```
+
 Restart
 ```bash
 docker compose restart
 ```
+
 ### Useful Docker commands
 List running containers
 ```bash
 docker ps
 ```
-View container logs
+
+## Logs
+Logs of running containers can be viewed directly via the Docker CLI.
+
+View logs
+```bash
+docker logs <container-name>
+```
+
+View logs
+```bash
+docker logs <container-name>
+```
+
+View logs live
 ```bash
 docker logs -f <container-name>
+```
+
+Save logs to a file
+```bash
+docker logs <container-name> > <container-name>-logs.txt
 ```
 
 
