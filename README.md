@@ -36,6 +36,16 @@ Create a `.env` file using this command and fill in the variables:
 cp .env.template .env
 ```
 
+Generate a Django secret key:
+
+```bash
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+> [!NOTE]
+> Paste the generated key into your `.env`.
+
+
 Build the server directly:
 ```bash
 docker compose build
