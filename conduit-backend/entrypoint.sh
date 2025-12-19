@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+
 echo "Starting my application..."
 
 mkdir -p /app/db /app/media

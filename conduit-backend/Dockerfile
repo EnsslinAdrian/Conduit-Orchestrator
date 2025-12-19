@@ -5,7 +5,7 @@ WORKDIR /app
 COPY . /app/
 
 RUN pip install --no-cache-dir -r requirements.txt && \
-    chmod +x /app/entrypoint.sh
+    chmod +x /app/entrypoint.sh 
 
 EXPOSE 8000
 
