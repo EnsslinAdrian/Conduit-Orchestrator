@@ -1,0 +1,54 @@
+services:
+    frontend:
+      build:
+        context: ./conduit-frontend
+        args:
+          API_URL: ${FRONTEND_API_URL}
+      restart: on-failure:5
+      ports:
+        - "8282:80"
+      depends_on:
+        - backend
+      networks:
+        - backend_network
+
+    backend:
+      build:
+        context: ./conduit-backend
+      restart: on-failure:5
+      depends_on:
+        db:
+          condition: service_healthy
+      ports:
+        - "8281:8000"
+      networks:
+        - backend_network
+      env_file:
+        - .env
+      volumes:
+        - backend_media:/app/media
+
+    db:
+      image: postgres:14-alpine
+      restart: on-failure:5
+      environment:
+        POSTGRES_DB: ${DB_NAME}
+        POSTGRES_USER: ${DB_USER}
+        POSTGRES_PASSWORD: ${DB_USER_PASSWORD}
+      volumes:
+        - postgres_data:/var/lib/postgresql/data
+      networks:
+        - backend_network
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U $DB_USER -d $DB_NAME"]
+        interval: 5s
+        timeout: 5s
+        retries: 5
+      
+
+volumes:
+    backend_media:
+    postgres_data:
+
+networks:
+  backend_network:

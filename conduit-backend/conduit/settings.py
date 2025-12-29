@@ -20,12 +20,20 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '2^f+3@v7$v1f8yt0!s)3-1t$)tlp+xm17=*g))_xoi&&9m#2a&'
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get(
+    'DJANGO_ALLOWED_HOSTS'
+).split(',')
+
+CORS_ORIGIN_WHITELIST = os.environ.get(
+    'CORS_ALLOWED_ORIGINS',
+).split(',')
+
+CORS_ORIGIN_ALLOW_ALL = True
 
 
 # Application definition
@@ -49,14 +57,15 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'conduit.urls'
@@ -85,11 +94,14 @@ WSGI_APPLICATION = 'conduit.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME'),
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD': os.environ.get('DB_USER_PASSWORD'),
+        'HOST': os.environ.get('DB_HOST_ADDRESS', 'db'),
+        'PORT': os.environ.get('DB_PORT_NUMBER', '5432'),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
@@ -128,11 +140,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-CORS_ORIGIN_WHITELIST = (
-    '0.0.0.0:4000',
-    'localhost:4000',
-)
 
 # Tell Django about the custom `User` model we created. The string
 # `authentication.User` tells Django we are referring to the `User` model in
