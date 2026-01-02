@@ -5,7 +5,7 @@ on:
 
 jobs:
   step:
-    name: Build
+    name: Connect
     runs-on: ubuntu-latest
     steps:
       - name: Execute remote SSH commands using password
