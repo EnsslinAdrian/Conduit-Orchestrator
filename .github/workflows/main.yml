@@ -47,7 +47,7 @@ jobs:
 
     # Step 6
       - name: Copy compose.yaml and .env to server
-        uses: appleboy/scp-action@v1
+        uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
