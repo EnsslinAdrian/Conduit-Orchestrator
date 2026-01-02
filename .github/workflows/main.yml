@@ -34,16 +34,16 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
     # Step 3
+      - name: Create .env from secret
+        run: echo "${{ secrets.ENV_FILE }}" > .env
+
+    # Step 4
       - name: Build Docker images
         run: docker compose build
 
-    # Step 4
+    # Step 5
       - name: Push Docker images
         run: docker compose push
-
-    # Step 5
-      - name: Create .env from secret
-        run: echo "${{ secrets.ENV_FILE }}" > .env
 
     # Step 6
       - name: Copy compose.yaml and .env to server
