@@ -21,9 +21,11 @@ jobs:
       packages: write
 
     steps:
+    # Step 1
       - name: Checkout repository
         uses: actions/checkout@v4
 
+    # Step 2
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
@@ -31,12 +33,30 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+    # Step 3
       - name: Build Docker images
         run: docker compose build
 
+    # Step 4
       - name: Push Docker images
         run: docker compose push
 
+    # Step 5
+      - name: Create .env from secret
+        run: echo "${{ secrets.ENV_FILE }}" > .env
+
+    # Step 6
+      - name: Copy compose.yaml and .env to server
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH }}
+          port: ${{ secrets.PORT }}
+          source: "docker-compose.yaml,.env"
+          target: ${{ secrets.PATH }}
+
+    # Step 7
       - name: Deploy on VM
         uses: appleboy/ssh-action@v1
         with:
@@ -45,6 +65,6 @@ jobs:
           key: ${{ secrets.SSH }}
           port: ${{ secrets.PORT }}
           script: |
-            cd projects/conduit-orchestrator || exit 1
+            cd ${{ secrets.PATH }} || exit 1
             docker compose pull
             docker compose up -d
