@@ -1,4 +1,4 @@
-name: Github Action Demo
+name: Deployment
 run-name: Deploy by @${{ github.actor }}
 
 on:
@@ -7,13 +7,8 @@ on:
       - main
   workflow_dispatch:
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-
 jobs:
   build_and_deploy:
-    name: Build and Deploy
     runs-on: ubuntu-latest
 
     permissions:
@@ -21,11 +16,9 @@ jobs:
       packages: write
 
     steps:
-    # Step 1
       - name: Checkout repository
         uses: actions/checkout@v4
 
-    # Step 2
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
@@ -33,38 +26,36 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-    # Step 3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push images via Buildx Bake
+        uses: docker/bake-action@v4
+        with:
+          files: docker-compose.yml
+          push: true
+
       - name: Create .env from secret
         run: echo "${{ secrets.ENV_FILE }}" > .env
 
-    # Step 4
-      - name: Build Docker images
-        run: docker compose build
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p ${{ secrets.PORT }} ${{ secrets.HOST }} >> ~/.ssh/known_hosts
 
-    # Step 5
-      - name: Push Docker images
-        run: docker compose push
+      - name: Copy files to server
+        run: |
+          scp -P ${{ secrets.PORT }} \
+            docker-compose.yaml .env \
+            ${{ secrets.USER }}@${{ secrets.HOST }}:${{ secrets.PATH }}
 
-    # Step 6
-      - name: Copy compose.yaml and .env to server
-        uses: appleboy/scp-action@v1.0.0
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
-          key: ${{ secrets.SSH }}
-          port: ${{ secrets.PORT }}
-          source: "docker-compose.yaml,.env"
-          target: ${{ secrets.PATH }}
-
-    # Step 7
       - name: Deploy on VM
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
-          key: ${{ secrets.SSH }}
-          port: ${{ secrets.PORT }}
-          script: |
-            cd ${{ secrets.PATH }} || exit 1
-            docker compose pull
-            docker compose up -d
+        run: |
+          ssh -p ${{ secrets.PORT }} \
+            ${{ secrets.USER }}@${{ secrets.HOST }} << 'EOF'
+              cd ${{ secrets.PATH }} || exit 1
+              docker compose pull
+              docker compose up -d
+          EOF
