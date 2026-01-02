@@ -1,6 +1,6 @@
 services:
     frontend:
-      image: ghcr.io/EnsslinAdrian/conduit-orchestrator-frontend:latest
+      image: ghcr.io/ensslinadrian/conduit-orchestrator-frontend:latest
       build:
         context: ./conduit-frontend
         args:
@@ -14,7 +14,7 @@ services:
         - backend_network
 
     backend:
-      image: ghcr.io/EnsslinAdrian/conduit-orchestrator-backend:latest
+      image: ghcr.io/ensslinadrian/conduit-orchestrator-backend:latest
       build:
         context: ./conduit-backend
       restart: on-failure:5
