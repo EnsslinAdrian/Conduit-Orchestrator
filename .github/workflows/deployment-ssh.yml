@@ -1,19 +1,37 @@
-name: Conduit-Orchestrator-Workflow
+name: SSH Connect
+run-name: Deploy to ${{ github.event.head_commit.message }} by @${{ github.actor }}
 
 on:
+  push:
+    branches: 
+    - main
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build
+  deploy:
     runs-on: ubuntu-latest
     steps:
-    - name: Execute remote SSH commands using SSH key
-      uses: appleboy/ssh-action@v1
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USER }}
-        key: ${{ secrets.SSH }}
-        port: ${{ secrets.PORT }}
-        script: whoami
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
+      - name: Create .env on VM
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH }}
+          port: ${{ secrets.PORT }}
+          script: |
+            cat << 'EOF' > ~/projects/ssh-connect/.env
+            ${{ secrets.ENV_FILE }}
+            EOF
+            
+      - name: Copy files to VM
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH }}
+          port: ${{ secrets.PORT }}
+          source: "."
+          target: "~/projects/ssh-connect"
