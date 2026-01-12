@@ -48,7 +48,7 @@ jobs:
           ghcr.io/ensslinadrian/conduit-frontend:${{ github.sha }}
       
     - name: Create and Push .env
-      uses: appleboy/ssh-action@v1
+      uses: appleboy/ssh-action@v1.2.2
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USER }}
@@ -57,6 +57,7 @@ jobs:
         script: |
           cat << 'EOF' > ~/${{ secrets.PATH }}/.env
           ${{ secrets.ENV_FILE }}
+          chmod 600 ~/${{ secrets.PATH }}/.env
           EOF
 
     - name: Copy docker-compose.yml to VM
