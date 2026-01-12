@@ -73,10 +73,10 @@ jobs:
     - name: Deploy to VM via SSH
       uses: appleboy/ssh-action@v1.2.2
       with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USER }}
-        key: ${{ secrets.SSH_KEY }}
-        port: ${{ secrets.SSH_PORT }}
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USER }}
+        key: ${{ secrets.KEY }}
+        port: ${{ secrets.PORT }}
         script: |
           set -e
           cd ~/${{ secrets.PROJECT_PATH }}
