@@ -55,7 +55,7 @@ jobs:
         key: ${{ secrets.KEY }}
         port: ${{ secrets.PORT }}
         script: |
-          cat << 'EOF' > ~/${{ secrets.PATH }}/.env
+          cat << 'EOF' > ~/${{ secrets.PROJECT_PATH }}/.env
           ${{ secrets.ENV_FILE }}
           chmod 600 ~/${{ secrets.PATH }}/.env
           EOF
@@ -75,7 +75,7 @@ jobs:
         port: ${{ secrets.SSH_PORT }}
         script: |
           set -e
-          cd ~/${{ secrets.PATH }}
+          cd ~/${{ secrets.PROJECT_PATH }}
           docker-compose pull
           docker-compose down
           docker-compose up -d --force-recreate
