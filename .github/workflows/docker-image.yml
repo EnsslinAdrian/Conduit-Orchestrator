@@ -80,8 +80,8 @@ jobs:
         script: |
           set -e
           cd ~/${{ secrets.PROJECT_PATH }}
-          docker-compose pull
-          docker-compose down
-          docker-compose up -d --force-recreate
+          docker compose pull
+          docker compose down
+          docker compose up -d --force-recreate
           docker image prune -f
 
