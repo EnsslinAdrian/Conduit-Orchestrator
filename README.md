@@ -64,6 +64,10 @@ Access this URL:
 
 ## Project Structure
 ```
+|-- 📁 .github
+|--|-- 📁 workflows
+|  |--|-- ❕ docker-image.yml
+|
 |-- 📁 conduit-backend
 |--|-- 📁 conduit
 |  |-- 📄 .dockerignore
@@ -175,6 +179,22 @@ Here we combine containerization using a frontend and a backend that are control
 - config injection # Injects the backend API URL at build time via build arguments
 - optimization    # Excludes Node.js and build tools from the final image
 - runtime stage   # Serves the compiled frontend via a minimal Nginx image
+
+```
+<br>
+
+> The GitHub Actions workflow automates the build, publish, and deployment process for the Conduit application using Docker and GitHub Container Registry.
+
+→ [GitHub Actions Workflow](./.github/workflows/docker-image.yml)
+``` yml
+- checkout        # Checks out the repository to access Dockerfiles and compose configuration
+- registry login  # Authenticates to GitHub Container Registry (GHCR) using GITHUB_TOKEN
+- image build     # Builds backend and frontend Docker images via Docker Buildx
+- image publish   # Pushes versioned images (latest + commit SHA) to GHCR
+- env provisioning# Creates and secures the .env file on the target VM via SSH
+- compose sync    # Transfers the docker-compose.yml to the remote server
+- deployment      # Pulls updated images and recreates containers using Docker Compose
+- cleanup         # Removes unused Docker images to keep the server clean
 ```
 
 
