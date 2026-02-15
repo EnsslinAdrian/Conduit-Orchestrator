@@ -1,0 +1,11 @@
+{
+  "name": "Conduit Backend Container",
+  "dockerComposeFile": [
+    "../../docker-compose.yml",
+    "docker-compose.yml"
+  ],
+  "service": "backend",
+  "shutdownAction": "none",
+  "workspaceFolder": "/workspaces/Porjekte Developer DevSecOps/Conduit-Container/conduit-backend",
+  "postCreateCommand": "apt-get update && apt-get install -y libpq-dev gcc && pip install -r requirements.txt"
+}

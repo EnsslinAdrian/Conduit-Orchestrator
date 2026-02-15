@@ -1,0 +1,13 @@
+{
+  "name": "Conduit Frontend Container",
+  "dockerComposeFile": [
+    "../../docker-compose.yml",
+    "docker-compose.yml"
+  ],
+  "service": "frontend",
+  "shutdownAction": "none",
+  // "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "workspaceFolder": "/workspaces/Porjekte Developer DevSecOps/Conduit-Container/conduit-frontend",
+  "postCreateCommand": "apk add --no-cache nodejs npm && npm install",
+  "postStartCommand": "npm start"
+}

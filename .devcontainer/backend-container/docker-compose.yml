@@ -1,0 +1,6 @@
+services:
+  backend:
+    volumes:
+      - ../../:/workspaces:cached
+    entrypoint: /bin/sh
+    command: sleep infinity
