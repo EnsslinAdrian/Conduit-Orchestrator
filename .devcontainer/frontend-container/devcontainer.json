@@ -10,7 +10,7 @@
   },
   "runServices": ["frontend"], // We only need to run the frontend service for this dev container, as the backend and database are handled by the backend dev container
   "service": "frontend", // This is the name of the service in docker-compose.yml that we want to use for this dev container
-  "shutdownAction": "none", // We don't want the container to stop when we close VS Code, as it might be running background tasks
+  "shutdownAction": "stopCompose", // When we shut down the dev container, we want to stop the entire Docker Compose project to clean up all services
   "mounts": [ "source=${localWorkspaceFolder},target=/app,type=bind,consistency=cached" ], // We bind mount the entire workspace into /app in the container, with cached consistency for better performance on macOS
   "workspaceFolder": "/app/conduit-frontend", // This is the folder that VS Code will open by default when we start the dev container
 

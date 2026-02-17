@@ -1,3 +1,6 @@
 services:
   frontend:
+    restart: "no"
+    volumes:
+      - /app/conduit-frontend/node_modules
     command: sleep infinity
