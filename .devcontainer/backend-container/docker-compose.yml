@@ -1,0 +1,7 @@
+services:
+  backend:
+    restart: "no"
+    entrypoint: /bin/sh # We override the default entrypoint to keep the container running after setup
+    command: ["-c", "while true; do sleep 1000; done"] # Endless loop to keep the container alive
+    tty: true # To prevent the container from stopping immediately
+    stdin_open: true # To allow us to 'shell' into the container

@@ -1,0 +1,19 @@
+{
+  "name": "Conduit Backend Container", // Name of the dev container
+  "dockerComposeFile": [ // We specify both the root docker-compose.yml and the one in this folder to ensure all services are available
+    "../../docker-compose.yml",
+    "docker-compose.yml",
+    "../frontend-container/docker-compose.yml" 
+  ],
+  "remoteEnv": { // We set the COMPOSE_PROJECT_NAME environment variable to ensure that all containers are part of the same Docker Compose project, which allows them to communicate with each other using service names
+    "COMPOSE_PROJECT_NAME": "conduit-dev-env"
+  },
+  "runServices": ["backend", "db"], // We need to run both the backend and the database services for this dev container
+  "service": "backend", // This is the name of the service in docker-compose.yml that we want to use for this dev container
+  "shutdownAction": "stopCompose", // When we shut down the dev container, we want to stop the entire Docker Compose project to clean up all services
+  "mounts": [ "source=${localWorkspaceFolder},target=/app,type=bind,consistency=cached" ], // We bind mount the entire workspace into /app in the container, with cached consistency for better performance on macOS
+  "workspaceFolder": "/app/conduit-backend", // This is the folder that VS Code will open by default when we start the dev container
+
+  "postCreateCommand": "sh /app/.devcontainer/backend-container/setup-backend.sh", // After the container is created, we run our setup script to prepare the environment (install dependencies, etc.)
+  "postAttachCommand": "python manage.py runserver 0.0.0.0:8002" // After we attach to the container, we run the command to start the backend server
+}
